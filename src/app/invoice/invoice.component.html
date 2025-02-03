@@ -1,0 +1,311 @@
+<form class="container" #InvoiceForm="ngForm">
+    <div class="card" style="width: 1300px">
+        <h1 class="text-center" style="font-weight: bold; text-decoration: underline;">Invoice</h1>
+
+        <div class="card p-2 mt-0">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="form-group">
+                        <label>Invoice No</label>
+                        <span class="text-danger">*</span>
+                        <input class="form-control" [value]="invoice.invoiceNo" name="invoiceNo" readonly />
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="form-group">
+                        <label>Invoice Date</label>
+                        <input type="date" class="form-control" [(ngModel)]="invoice.invoiceDate" name="invoiceDate" />
+                    </div>
+                </div>
+            </div>
+            <!-- Invoice and Customer Section -->
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="form-group">
+                        <label>Customer</label>
+                        <span class="text-danger">*</span>
+                        <select class="form-control" (change)="onCustomerChange($event)"
+                            [(ngModel)]="invoice.customerId" name="customerId">
+                            <option *ngFor="let customer of Customer" [value]="customer.employeeId">
+                                {{ customer.employeeName }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="row">
+                        <!-- Attachment Section -->
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label>Attachment</label>
+                                <input type="file" class="form-control" (change)="onFileSelected($event)" />
+                            </div>
+                            <!-- Conditionally display the current attachment -->
+                            <div *ngIf="!fileupload || fileupload === ''">
+                                <div *ngIf="invoice.AttachmentName && invoice.AttachmentName !== ''">
+                                    <a [href]="'https://localhost:7002/uploads/' + invoice.AttachmentName"
+                                        target="_blank" rel="noopener noreferrer">
+                                        {{ invoice.AttachmentName }}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Attachment Preview Button -->
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <button class="btn btn-primary btn-block p-1 m-4" [disabled]="!selectedFile"
+                                    (click)="previewAttachment()">
+                                    Preview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attachment Preview Modal -->
+                    <div *ngIf="showPreview" class="modal" tabindex="-1" style="display: block;" role="dialog">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title style=font-weight:bold;">Attachment Preview</h5>
+                                </div>
+                                <div class="modal-body">
+                                    <!-- If it's an image -->
+                                    <img *ngIf="isImage" [src]="attachmentPreview" alt="Attachment Preview"
+                                        class="img-fluid" />
+                                    <!-- If it's a PDF -->
+                                    <iframe *ngIf="!isImage" [src]="attachmentPreview"
+                                        style="width: 100%; height: 400px; "></iframe>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        (click)="closePreview()">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address and Remarks Section -->
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea class="form-control" [(ngModel)]="invoice.deliveryAddress" name="deliveryAddress"
+                            rows="3" readonly></textarea>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="form-group">
+                        <label>Remarks</label>
+                        <textarea class="form-control" [(ngModel)]="invoice.remarks" name="remarks" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <br>
+            <div class="card p-2 mt-0">
+                <!-- <h5>Product Details</h5> -->
+                <div class="row">
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label>Product Code</label>
+                            <select class="form-control" [(ngModel)]="selectedProductId" (change)="onItemChange($event)"
+                                name="productid">
+                                <option *ngFor="let Item1 of Item" [value]="Item1.id">
+                                    {{ Item1.itemcode }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input class="form-control" [(ngModel)]="selectedDescription" name="description" readonly />
+                        </div>
+                    </div>
+                    <div class="col-lg-2">
+                        <div class="form-group">
+                            <label>Quantity</label>
+                            <input class="form-control" type="number" [(ngModel)]="quantity" name="quantity"
+                                (input)="calculateTotal()" />
+                        </div>
+                    </div>
+                    <div class="col-lg-2">
+                        <div class="form-group">
+                            <label>Price</label>
+                            <input class="form-control" type="number" [(ngModel)]="price" name="price"
+                                (input)="calculateTotal()" />
+                        </div>
+                    </div>
+                    <div class="col-lg-2">
+                        <div class="form-group">
+                            <label>Total</label>
+                            <input class="form-control" [value]="total" name="total" readonly />
+                        </div>
+                    </div>
+                    <div class="col-lg-12 text-right p-2 mt-0">
+                        <button type="button" class="btn btn-success m-0" (click)="addProduct()">Add</button>
+                        <!-- Rate History Button -->
+                        <!-- Button to trigger Rate History modal -->
+                        <button type="button" class="btn btn-danger m-2" [disabled]="!productid"
+                            (click)="openRateHistoryModal()">Rate History</button>
+
+                        <!-- Modal Structure -->
+                        <div class="modal fade" id="rateHistoryModal" tabindex="-1"
+                            aria-labelledby="rateHistoryModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="rateHistoryModalLabel">Rate History</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <!-- Table to display rate history -->
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Customer Name</th>
+                                                    <th>Invoice No</th>
+                                                    <th>Date</th>
+                                                    <th>Rate</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr *ngFor="let rate of rateHistory">
+                                                    <td>{{ rate.customerName }}</td>
+                                                    <td>{{ rate.invoiceNo }}</td>
+                                                    <td>{{ rate.date }}</td>
+                                                    <td>{{ rate.rate }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br />
+                <!-- Products Table Section -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <table class="table table-bordered">
+                            <thead class="bg-primary text-white">
+                                <tr>
+                                    <th>Sr.No</th>
+                                    <th>Product Code</th>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let product of products; let i = index">
+                                    <td>{{ i + 1 }}</td>
+                                    <td>{{ product.productCode }}</td>
+                                    <td>{{ product.description }}</td>
+                                    <td>{{ product.quantity }}</td>
+                                    <td>{{ product.price }}</td>
+                                    <td>{{ product.total }}</td>
+                                    <td>
+                                        <button class="btn btn-info btn-sm m-2" (click)="editProduct(i)">Edit</button>
+                                        <button class="btn btn-danger btn-sm m-2"
+                                            (click)="removeProduct(i)">Remove</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <!-- Summary Section -->
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="form-group">
+                        <label>Summary Total</label>
+                        <input class="form-control" [value]="invoice.total" readonly />
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="form-group">
+                        <label for="tax">Tax (%)</label>
+                        <input class="form-control" type="number" [(ngModel)]="invoice.tax" name="invoice.tax"
+                            (input)="onTaxChange()" />
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="form-group">
+                        <label>Summary NetTotal</label>
+                        <input class="form-control" [value]="invoice.netTotal" readonly />
+                    </div>
+                </div>
+            </div>
+            <!-- This section will be hidden on the screen and only shown for printing -->
+            <div id="printableReport" class="d-none">                
+                <p><strong>Invoice No:</strong> {{ invoice.invoiceNo }}</p>
+                <p><strong>Invoice Date:</strong> {{ invoice.invoiceDate }}</p>
+                <p><strong>Customer Name:</strong> {{ invoice.customerName }}</p>
+                
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Sr.No</th>
+                            <th>Product Code</th>
+                            <th>Description</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let product of products; let i = index">
+                            <td style="text-align: center;">{{ i + 1 }}</td>
+                            <td style="text-align: center;">{{ product.productCode }}</td>
+                            <td>{{ product.description }}</td>
+                            <td style="text-align: center;">{{ product.quantity }}</td>
+                            <td style="text-align: right;">{{ product.price }}</td>
+                            <td style="text-align: right;">{{ product.total }}</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" style="text-align: right;"><strong>Total:</strong></td>                           
+                            <td style="text-align: right;">{{ invoice.total }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5" style="text-align: right;"><strong>Tax(%):</strong></td>                              
+                            <td style="text-align: right;">{{ invoice.tax }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5" style="text-align: right;"><strong>Net Total:</strong></td>                              
+                            <td style="text-align: right;">{{ invoice.netTotal }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+
+            <div class="text-center mt-3">
+                <button mat-raised-button class="m-2" (click)="resetFormFields()">Clear</button>
+                <button mat-raised-button color="primary" class="m-2" type="submit" (click)="saveInvoice(InvoiceForm)">
+                    {{ invoice.invoiceId ? 'Update' : 'Save' }}
+                </button>
+                <!-- <button class="btn btn-primary" (click)="generateReport()">Generate Report</button> -->
+                <button *ngIf="showReport" class="btn btn-success" (click)="printReport()">Print Report</button>
+                <!-- <button mat-raised-button color="primary" class="m-2" type="submit" (click)="saveInvoice()">Save</button> -->
+            </div>
+
+        </div>
+    </div>
+</form>

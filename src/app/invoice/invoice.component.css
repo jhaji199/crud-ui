@@ -1,0 +1,21 @@
+/* Hide report section on screen */
+#printableReport {
+    display: none;
+  }
+  
+  /* Show report section only for print */
+  @media print {
+    #printableReport {
+      display: block;
+    }
+  
+    /* Hide the Print button */
+    button {
+      display: none;
+    }
+  }
+  /* Align table footer on the right side */
+tfoot td {
+    font-weight: bold;
+    text-align: right;
+}
